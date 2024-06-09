@@ -3,14 +3,16 @@
 #include "TFT_22_ILI9225.h"
 
 
-#define TX 16
-#define RX 17
-HardwareSerial *SimSerial = &Serial1;
+#define TX 16  //esp32 serial pin
+#define RX 17 //esp32 serial pin
+HardwareSerial *SimSerial = &Serial1;  //init esp32 serial
+//debug define
 #define DebugStream Serial
 #define DEBUG_PRINT(...) DebugStream.print(__VA_ARGS__)
 #define DEBUG_PRINTLN(...) DebugStream.println(__VA_ARGS__)
 typedef const __FlashStringHelper *FStringPtr;
 
+//keypad init
 const byte ROWS = 4;
 const byte COLS = 4;
 char hexaKeys[ROWS][COLS] = {
@@ -23,8 +25,9 @@ byte rowPins[ROWS] = { 27, 14, 12, 13 };
 byte colPins[COLS] = { 32, 33, 25, 26 };
 static byte kpadState;
 Keypad keypad = Keypad(makeKeymap(hexaKeys), rowPins, colPins, ROWS, COLS);
-char mobile[30] = { 0 };
-int i = 0;
+
+
+
 
 #define TFT_LED 0           // 0 if wired to +5V directly
 #define TFT_CS 2            // HSPI-SS0
@@ -44,6 +47,9 @@ char DATE[8];
 char TIME[8];
 String data[10] = { "0", "9", "9", "0", "0", "00/00/00", "00:00:00", "0000000000" };
 char calltype[10] = { 0 };
+
+char mobile[30] = { 0 };
+int i = 0;
 
 void setup() {
   delay(10000);
