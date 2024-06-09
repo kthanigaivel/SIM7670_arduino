@@ -2,10 +2,11 @@
 #include <Keypad.h>
 #include "TFT_22_ILI9225.h"
 
-
+//simcom init
 #define TX 16  //esp32 serial pin
 #define RX 17 //esp32 serial pin
 HardwareSerial *SimSerial = &Serial1;  //init esp32 serial
+
 //debug define
 #define DebugStream Serial
 #define DEBUG_PRINT(...) DebugStream.print(__VA_ARGS__)
@@ -26,9 +27,7 @@ byte colPins[COLS] = { 32, 33, 25, 26 };
 static byte kpadState;
 Keypad keypad = Keypad(makeKeymap(hexaKeys), rowPins, colPins, ROWS, COLS);
 
-
-
-
+//ili9225 display init
 #define TFT_LED 0           // 0 if wired to +5V directly
 #define TFT_CS 2            // HSPI-SS0
 #define TFT_RST 21          // IO 26
@@ -39,18 +38,19 @@ Keypad keypad = Keypad(makeKeymap(hexaKeys), rowPins, colPins, ROWS, COLS);
 TFT_22_ILI9225 tft = TFT_22_ILI9225(TFT_RST, TFT_RS, TFT_CS, TFT_SDI, TFT_CLK, TFT_LED, TFT_BRIGHTNESS);
 int x = 0, y = 90;
 
+// data manage
 int16_t timeout = 7000;
 char replybuffer[254];
 char number[30] = { 0 };
+char mobile[30] = { 0 };
+char calltype[10] = { 0 };
 char calltime[1];
 char DATE[8];
 char TIME[8];
 String data[10] = { "0", "9", "9", "0", "0", "00/00/00", "00:00:00", "0000000000" };
-char calltype[10] = { 0 };
-
-char mobile[30] = { 0 };
 int i = 0;
 
+//setup
 void setup() {
   delay(10000);
   Serial.begin(115200);
@@ -70,6 +70,8 @@ void setup() {
   keypad.begin(makeKeymap(hexaKeys));
   keypad.addEventListener(keypadEvent);
 }
+
+//loop
 void loop() {
   while (Serial.available()) {
     SimSerial->write(Serial.read());
@@ -78,7 +80,7 @@ void loop() {
   if (customKey) {
   }
 }
-
+//modem config
 boolean config() {
   sendData(F("AT"));
   sendData(F("AT+CRC=1"));
@@ -90,7 +92,7 @@ boolean config() {
   sendData(F("ATE0"));
   return true;
 }
-
+//screen updation
 void updatescreen() {
   // sendData(F("AT+CCLK?"));
   // sendData(F("AT+CLCC"));
@@ -135,13 +137,11 @@ void updatescreen() {
       tft.drawText(5, 110, data[4]);
       break;
   }
-
-
   tft.drawText(tft.maxX() / 2, 0, data[6]);
   tft.drawText(5, 170, "Dial...");
   tft.drawText(5, 190, mobile);
 }
-
+//on receive interrupt and fetch data
 void onreceive() {
   while (SimSerial->available() > 0) {
     while (readline(false) > 0) {
@@ -229,10 +229,12 @@ void onreceive() {
     }
   }
 }
-
+//debug
 void debug() {
   DEBUG_PRINTLN(replybuffer);
 }
+
+//send serial commands and data functions
 void sendData(char *send) {
   SimSerial->println(send);
 }
@@ -243,13 +245,14 @@ void sendData(FStringPtr send, char suffix) {
   SimSerial->print(send);
   SimSerial->println(suffix);
 }
-
 void sendData(FStringPtr send, char suffix, int suffix1) {
   SimSerial->print(send);
   SimSerial->print(suffix);
   SimSerial->print(",");
   SimSerial->println(suffix1);
 }
+
+//readline function
 uint8_t readline(boolean multiline) {
   uint16_t replyidx = 0;
   while (timeout--) {
@@ -282,7 +285,7 @@ uint8_t readline(boolean multiline) {
   replybuffer[replyidx] = 0;  // null term
   return replyidx;
 }
-
+//keypad evernt
 void keypadEvent(KeypadEvent key) {
   kpadState = keypad.getState();
   char keyVal = key;
@@ -301,7 +304,7 @@ void keypadEvent(KeypadEvent key) {
       break;
   }
 }
-
+//keypad event for reset 
 void reset(char n) {
   switch (n) {
     case NO_KEY:
@@ -317,6 +320,7 @@ void reset(char n) {
       break;
   }
 }
+//keypad event for call
 void call(char n) {
   switch (n) {
     case NO_KEY:
@@ -375,7 +379,7 @@ void call(char n) {
       }
   }
 }
-
+//keypad event for dtml only
 void dtmf(char n) {
   switch (n) {
     case NO_KEY:
